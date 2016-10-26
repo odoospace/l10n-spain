@@ -24,7 +24,7 @@
 
 {
     "name": "Topónimos españoles",
-    "version": "8.0.2.0.0",
+    "version": "9.0.2.0.0",
     "author": "Spanish Localization Team, "
               "ZikZakMedia, "
               "Serv. Tecnol. Avanzados - Pedro M. Baeza, "
@@ -49,5 +49,5 @@
     'test': [
         'test/wizard.yml'
     ],
-    'installable': False
+    'installable': True
 }
