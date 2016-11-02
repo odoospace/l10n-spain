@@ -23,7 +23,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-from openerp import models, fields, _
+from openerp import api, models, fields, _
 
 
 class ResPartnerBank(models.Model):
@@ -83,15 +83,14 @@ class ResPartnerBank(models.Model):
             iban_str = iban_str[4:]
         return ' '.join(res)
 
-    def onchange_banco(self, cr, uid, ids, account, country_id,
-                       state, context=None):
-        if account and country_id:
-            country = self.pool.get('res.country').browse(cr, uid, country_id,
-                                                          context=context)
-            if country.code.upper() == 'ES':
-                bank_obj = self.pool.get('res.bank')
-                if state == 'bank':
-                    account = account.replace(' ', '')
+    @api.onchange('acc_number','acc_country_id')
+    @api.depends('acc_number', 'acc_country_id', 'acc_type')
+    def onchange_banco(self):
+        if self.acc_number and self.acc_country_id:
+
+            if self.acc_country_id.code.upper() == 'ES':
+                if self.acc_type == 'bank':
+                    account = self.acc_number.replace(' ', '')
                     number = self.checkBankAccount(account)
                     if number == 'invalid-size':
                         return {
@@ -108,30 +107,28 @@ class ResPartnerBank(models.Model):
                                 'message': _('Invalid bank account.')
                             }
                         }
-                    bank_ids = bank_obj.search(cr, uid,
-                                               [('code', '=', number[:4])],
-                                               context=context)
+                    bank_ids = self.env['res.bank'].search([('code', '=', number[:4])])
+
                     if bank_ids:
-                        return {'value': {'acc_number': number,
-                                          'bank': bank_ids[0]}}
+                        self.acc_number = number
+                        self.bank_id = bank_ids[0]
+                        return 
                     else:
-                        return {'value': {'acc_number': number}}
-                elif state == 'iban':
-                    partner_bank_obj = self.pool['res.partner.bank']
-                    if partner_bank_obj.is_iban_valid(cr, uid, account,
-                                                      context):
-                        number = self._pretty_iban(account.replace(" ", ""))
-                        bank_ids = bank_obj.search(
-                            cr, uid, [('code', '=', number[5:9])],
-                            context=context)
-                        if bank_ids:
-                            return {'value': {'acc_number': number,
-                                              'bank': bank_ids[0]}}
-                        else:
-                            return {'value': {'acc_number': number}}
+                        self.acc_number = number
+                        return 
+
+                elif self.acc_type == 'iban':
+                    self.env['res.partner.bank']._check_iban()
+                    number = self._pretty_iban(self.acc_number.replace(" ", ""))
+                    bank_ids = self.env['res.bank'].search([('code', '=', number[5:9])])
+                    if bank_ids:
+                        self.acc_number = number
+                        self.bank_id = bank_ids[0]
+                        return 
                     else:
-                        return {'warning': {'title': _('Warning'),
-                                'message': _('IBAN account is not valid')}}
+                        self.acc_number = number
+                        return 
+                    
         return {'value': {}}
 
 
