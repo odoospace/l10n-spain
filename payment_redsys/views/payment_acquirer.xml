@@ -7,7 +7,7 @@
             <field name="model">payment.acquirer</field>
             <field name="inherit_id" ref="payment.acquirer_form"/>
             <field name="arch" type="xml">
-                <xpath expr='//group[@name="acquirer_display"]' position='after'>
+                <xpath expr='//notebook' position='after'>
                     <group attrs="{'invisible': [('provider', '!=', 'redsys')]}">
                         <field name="redsys_merchant_url" attrs="{'required': [('provider', '=', 'redsys')]}"/>
                         <field name="redsys_merchant_titular" attrs="{'required': [('provider', '=', 'redsys')]}"/>
